@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="nl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atelier — Lokale Notities & Schrijfstudio</title>
+
+    <!-- Favicon -->
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗒️</text></svg>">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Bebas+Neue&family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&family=Indie+Flower&family=Londrina+Solid:wght@100;300;400;900&family=Outfit:wght@100..900&family=Space+Grotesk:wght@300..700&family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- Linker Zijbalk: Mappen & Bestanden -->
+    <aside class="file-sidebar" id="left-sidebar" aria-label="Mappen en bestanden">
+        <div class="sidebar-header">
+            <h2 class="app-title">Atelier</h2>
+            <div class="sidebar-header-actions">
+                <button type="button" id="btn-open-folder" class="folder-btn" title="Koppel lokale map">＋ Map</button>
+                <button type="button" id="btn-collapse-left" class="collapse-btn" title="Minimaliseer menu">◀</button>
+            </div>
+        </div>
+
+        <button type="button" id="btn-expand-left" class="expand-btn-floating" title="Open mappen">▶</button>
+
+        <div class="folder-container" id="file-tree">
+            <div class="empty-folder-state">
+                <p>Geen map gekoppeld.<br>Klik op <strong>＋ Map</strong> om je lokale notities-map te selecteren.</p>
+            </div>
+        </div>
+
+        <div class="file-sidebar-footer">
+            <button type="button" id="btn-new-file" class="secondary-btn" disabled>+ Nieuwe Notitie</button>
+        </div>
+    </aside>
+
+    <!-- Midden Schrijfcanvas -->
+    <main class="canvas-workspace">
+        <div class="canvas-container">
+            <div class="title-header-wrapper">
+                <button type="button" id="doc-emoji" title="Kies een icoon">📄</button>
+                <input type="text" id="doc-title" placeholder="Selecteer een notitie..." autocomplete="off" disabled>
+            </div>
+
+            <div id="editor" contenteditable="false"
+                data-placeholder="Koppel links een map en kies of maak een notitie om te beginnen..."></div>
+        </div>
+        <div class="status-bar" id="word-count">0 woorden</div>
+    </main>
+
+    <!-- Rechter Zijbalk -->
+    <aside class="control-sidebar" id="right-sidebar" aria-label="Opmaak en instellingen">
+        <div class="control-sidebar-header">
+            <button type="button" id="btn-collapse-right" class="collapse-btn" title="Minimaliseer menu">▶</button>
+            <h3 class="sidebar-subtitle">Instellingen & Opmaak</h3>
+        </div>
+
+        <button type="button" id="btn-expand-right" class="expand-btn-floating" title="Open instellingen">◀</button>
+
+        <div class="control-section">
+            <span class="section-label">Vormgeving</span>
+
+            <div class="control-group">
+                <label for="bg-hex">Achtergrond</label>
+                <div class="color-input-wrapper">
+                    <input type="color" id="bg-picker" value="#F7F5F0">
+                    <input type="text" id="bg-hex" class="hex-input" value="#F7F5F0" maxlength="7" spellcheck="false">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="text-hex">Tekstkleur</label>
+                <div class="color-input-wrapper">
+                    <input type="color" id="text-picker" value="#1E1D1B">
+                    <input type="text" id="text-hex" class="hex-input" value="#1E1D1B" maxlength="7" spellcheck="false">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="accent-hex">Accentkleur (Tip Box)</label>
+                <div class="color-input-wrapper">
+                    <input type="color" id="accent-picker" value="#F0ECE1">
+                    <input type="text" id="accent-hex" class="hex-input" value="#F0ECE1" maxlength="7"
+                        spellcheck="false">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Sferen</label>
+                <div class="presets">
+                    <button type="button" class="swatch" style="background: #F7F5F0;" data-bg="#F7F5F0"
+                        data-text="#1E1D1B" data-accent="#EFECE6" title="Warm Papier"></button>
+                    <button type="button" class="swatch" style="background: #141413;" data-bg="#141413"
+                        data-text="#E6E4DF" data-accent="#222220" title="Donkere Kamer"></button>
+                    <button type="button" class="swatch" style="background: #E4EBE5;" data-bg="#E4EBE5"
+                        data-text="#1B2B22" data-accent="#D5E0D7" title="Salie & Mos"></button>
+                    <button type="button" class="swatch" style="background: #23192D;" data-bg="#23192D"
+                        data-text="#F3D8C7" data-accent="#31223E" title="Nacht & Perzik"></button>
+                </div>
+            </div>
+
+            <!-- Tekstgrootte Stepper -->
+            <div class="control-group">
+                <label>Tekstgrootte</label>
+                <div class="font-size-stepper">
+                    <button type="button" id="font-size-dec" title="Kleiner">-</button>
+                    <span id="font-size-display">17px</span>
+                    <button type="button" id="font-size-inc" title="Groter">+</button>
+                </div>
+            </div>
+
+            <!-- Lettertype Dropdown -->
+            <div class="control-group">
+                <label>Lettertype (Notitie)</label>
+                <div class="custom-select-wrapper" id="font-dropdown">
+                    <div class="custom-select-trigger">
+                        <span id="selected-font-name">Outfit</span>
+                        <span class="arrow">▾</span>
+                    </div>
+                    <div class="custom-options">
+                        <div class="custom-option" data-value="'Outfit', sans-serif">Outfit</div>
+                        <div class="custom-option" data-value="'DM Sans', sans-serif">DM Sans</div>
+                        <div class="custom-option" data-value="'Space Grotesk', sans-serif">Space Grotesk</div>
+                        <div class="custom-option" data-value="'Urbanist', sans-serif">Urbanist</div>
+                        <div class="custom-option" data-value="'Bricolage Grotesque', sans-serif">Bricolage Grotesque
+                        </div>
+                        <div class="custom-option" data-value="'Fraunces', serif">Fraunces</div>
+                        <div class="custom-option" data-value="'Google Sans', sans-serif">Google Sans</div>
+                        <div class="custom-option" data-value="'Archivo Black', sans-serif">Archivo Black</div>
+                        <div class="custom-option" data-value="'Bebas Neue', cursive">Bebas Neue</div>
+                        <div class="custom-option" data-value="'Londrina Solid', cursive">Londrina Solid</div>
+                        <div class="custom-option" data-value="'Indie Flower', cursive">Indie Flower</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-divider"></div>
+
+        <div class="control-section">
+            <span class="section-label">Tekst opmaak</span>
+            <div class="tool-grid">
+                <button type="button" data-command="bold" title="Vetgedrukt"><strong>B</strong></button>
+                <button type="button" data-command="italic" title="Cursief"><em>I</em></button>
+                <button type="button" data-block="H1" title="Kop 1">H1</button>
+                <button type="button" data-block="H2" title="Kop 2">H2</button>
+                <button type="button" data-block="H3" title="Kop 3">H3</button>
+                <button type="button" data-block="P" title="Normale tekst">¶</button>
+                <button type="button" data-command="insertUnorderedList" title="Opsomming">Lijst</button>
+                <button type="button" data-command="insertOrderedList" title="Genummerd">Lijst</button>
+            </div>
+        </div>
+
+        <div class="control-divider"></div>
+
+        <div class="control-section">
+            <span class="section-label">Invoegen</span>
+            <div class="action-row">
+                <button type="button" id="btn-table" class="secondary-btn">Tabel</button>
+                <button type="button" id="btn-callout" class="secondary-btn"
+                    title="Voeg een uitgelichte tip-box toe">Tip Box</button>
+                <button type="button" id="btn-image" class="secondary-btn">Foto</button>
+                <input type="file" id="image-input" accept="image/*" hidden>
+            </div>
+        </div>
+
+        <div class="control-sidebar-footer">
+            <button type="button" class="primary-btn" id="btn-download">↓ Exporteer .TXT</button>
+        </div>
+    </aside>
+
+    <!-- Custom Emoji Picker Modal -->
+    <div id="emoji-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Kies een icoon</h3>
+            <div class="emoji-grid">
+                <button type="button" class="emoji-option">📄</button>
+                <button type="button" class="emoji-option">📝</button>
+                <button type="button" class="emoji-option">💡</button>
+                <button type="button" class="emoji-option">✨</button>
+                <button type="button" class="emoji-option">📌</button>
+                <button type="button" class="emoji-option">⭐</button>
+                <button type="button" class="emoji-option">🎯</button>
+                <button type="button" class="emoji-option">📚</button>
+                <button type="button" class="emoji-option">🖋️</button>
+                <button type="button" class="emoji-option">💼</button>
+                <button type="button" class="emoji-option">🧠</button>
+                <button type="button" class="emoji-option">⚡</button>
+                <button type="button" class="emoji-option">🎨</button>
+                <button type="button" class="emoji-option">💬</button>
+                <button type="button" class="emoji-option">📁</button>
+                <button type="button" class="emoji-option">☕</button>
+            </div>
+            <button type="button" id="close-emoji-modal" class="secondary-btn"
+                style="width: 100%; margin-top: 12px;">Sluiten</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
