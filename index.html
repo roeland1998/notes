@@ -10,7 +10,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗒️</text></svg>">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.png">
-    <meta name="theme-color" id="theme-color-meta" content="#F7F5F0">
+    <meta name="theme-color" id="theme-color-meta" content="#FAF4EE">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -76,54 +76,40 @@
             <div class="control-group">
                 <label for="bg-hex">Achtergrond</label>
                 <div class="color-input-wrapper">
-                    <input type="color" id="bg-picker" value="#F7F5F0">
-                    <input type="text" id="bg-hex" class="hex-input" value="#F7F5F0" maxlength="7" spellcheck="false">
+                    <input type="color" id="bg-picker" value="#FAF4EE">
+                    <input type="text" id="bg-hex" class="hex-input" value="#FAF4EE" maxlength="7" spellcheck="false">
                 </div>
             </div>
 
             <div class="control-group">
                 <label for="text-hex">Tekstkleur</label>
                 <div class="color-input-wrapper">
-                    <input type="color" id="text-picker" value="#1E1D1B">
-                    <input type="text" id="text-hex" class="hex-input" value="#1E1D1B" maxlength="7" spellcheck="false">
+                    <input type="color" id="text-picker" value="#874800">
+                    <input type="text" id="text-hex" class="hex-input" value="#874800" maxlength="7" spellcheck="false">
                 </div>
             </div>
 
             <div class="control-group">
                 <label for="accent-hex">Accentkleur (Tip Box)</label>
                 <div class="color-input-wrapper">
-                    <input type="color" id="accent-picker" value="#F0ECE1">
-                    <input type="text" id="accent-hex" class="hex-input" value="#F0ECE1" maxlength="7" spellcheck="false">
-                </div>
-            </div>
-
-            <div class="control-group">
-                <label>Sferen (Standaard)</label>
-                <div class="presets">
-                    <button type="button" class="swatch" style="background: #F7F5F0;" data-bg="#F7F5F0"
-                        data-text="#1E1D1B" data-accent="#EFECE6" title="Warm Papier"></button>
-                    <button type="button" class="swatch" style="background: #141413;" data-bg="#141413"
-                        data-text="#E6E4DF" data-accent="#222220" title="Donkere Kamer"></button>
-                    <button type="button" class="swatch" style="background: #E4EBE5;" data-bg="#E4EBE5"
-                        data-text="#1B2B22" data-accent="#D5E0D7" title="Salie & Mos"></button>
-                    <button type="button" class="swatch" style="background: #23192D;" data-bg="#23192D"
-                        data-text="#F3D8C7" data-accent="#31223E" title="Nacht & Perzik"></button>
+                    <input type="color" id="accent-picker" value="#5F85FF">
+                    <input type="text" id="accent-hex" class="hex-input" value="#5F85FF" maxlength="7" spellcheck="false">
                 </div>
             </div>
 
             <!-- Eigen Opgeslagen Sferen Sectie -->
-            <div class="control-group">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <div class="control-group" style="margin-top: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                     <label>Mijn Sferen</label>
                     <button type="button" id="btn-save-theme" class="folder-btn" title="Huidige kleurencombinatie opslaan">＋ Bewaar</button>
                 </div>
-                <div id="custom-presets-container" class="presets" style="flex-wrap: wrap; gap: 8px; margin-top: 4px;">
-                    <!-- Wordt dynamisch gevuld -->
+                <div id="custom-presets-container" style="display: flex; flex-direction: column; gap: 6px;">
+                    <!-- Wordt dynamisch gevuld met stijlvolle preview-knoppen -->
                 </div>
             </div>
 
             <!-- Tekstgrootte Stepper -->
-            <div class="control-group">
+            <div class="control-group" style="margin-top: 8px;">
                 <label>Tekstgrootte</label>
                 <div class="font-size-stepper">
                     <button type="button" id="font-size-dec" title="Kleiner">-</button>
@@ -167,6 +153,7 @@
                 <button type="button" data-block="H1" title="Kop 1">H1</button>
                 <button type="button" data-block="H2" title="Kop 2">H2</button>
                 <button type="button" data-block="H3" title="Kop 3">H3</button>
+                <button type="button" id="btn-link" title="Link toevoegen aan selectie of Tip Box">🔗</button>
                 <button type="button" data-command="insertUnorderedList" title="Opsomming">Lijst</button>
                 <button type="button" data-command="insertOrderedList" title="Genummerd">Lijst</button>
             </div>
@@ -179,10 +166,14 @@
             <div class="action-row">
                 <button type="button" id="btn-table" class="secondary-btn">Tabel</button>
                 <button type="button" id="btn-callout" class="secondary-btn"
-                    title="Voeg een uitgelichte tip-box toe">Button</button>
+                    title="Voeg een uitgelichte tip-box toe">Tip Box</button>
                 <button type="button" id="btn-image" class="secondary-btn">Foto</button>
                 <input type="file" id="image-input" accept="image/*" hidden>
             </div>
+        </div>
+
+        <div class="control-sidebar-footer">
+            <button type="button" class="primary-btn" id="btn-download">↓ Exporteer .TXT</button>
         </div>
     </aside>
 
