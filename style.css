@@ -1,7 +1,7 @@
 :root {
-    --bg-color: #F7F5F0;
-    --text-color: #1E1D1B;
-    --accent-color: #F0ECE1;
+    --bg-color: #FAF4EE;
+    --text-color: #874800;
+    --accent-color: #5F85FF;
     --editor-font: 'Outfit', sans-serif;
     --ui-font: 'Google Sans', 'Inter', sans-serif;
     --font-size-base: 17px;
@@ -311,6 +311,19 @@ body {
     margin-bottom: 0.25em;
 }
 
+/* Links in de editor: geen underline en in de accentkleur */
+#editor a {
+    color: var(--accent-color);
+    text-decoration: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: opacity 0.15s;
+}
+
+#editor a:hover {
+    opacity: 0.8;
+}
+
 .notion-callout {
     display: flex;
     align-items: flex-start;
@@ -319,9 +332,18 @@ body {
     margin: 1.4em 0;
     border: 1px solid color-mix(in srgb, var(--text-color) 15%, transparent);
     gap: 12px;
-    width: 100%;
     width: fit-content;
     max-width: 100%;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.notion-callout[data-href] {
+    cursor: pointer;
+}
+
+.notion-callout[data-href]:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .notion-callout-content {
@@ -525,52 +547,63 @@ input[type="color"]::-webkit-color-swatch {
     text-transform: uppercase;
 }
 
-.presets {
+/* Nieuwe stijl voor opgeslagen sfeer-knoppen ("Hallo" button met accent-bolletje) */
+.custom-theme-btn {
+    width: 100%;
+    padding: 7px 10px;
+    border-radius: 6px;
+    border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+    cursor: pointer;
     display: flex;
-    gap: 6px;
+    align-items: center;
+    justify-content: space-between;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    transition: transform 0.15s, opacity 0.15s;
+    position: relative;
+}
+
+.custom-theme-btn:hover {
+    transform: scale(1.02);
+    opacity: 0.9;
+}
+
+.custom-theme-wrapper {
+    position: relative;
+    display: flex;
     align-items: center;
 }
 
-.swatch {
-    width: 20px;
-    height: 20px;
-    padding: 0;
-    border-radius: 50%;
-    border: 1px solid color-mix(in srgb, var(--text-color) 25%, transparent);
-    cursor: pointer;
-    transition: transform 0.2s;
-    position: relative;
-}
-
-.swatch:hover {
-    transform: scale(1.15);
-}
-
-/* Stijl voor opgeslagen custom sfeer knop met verwijder kruisje */
-.custom-swatch-wrapper {
-    position: relative;
-    display: inline-block;
-}
-
-.custom-swatch-wrapper .delete-swatch {
+.custom-theme-wrapper .delete-theme {
     position: absolute;
     top: -6px;
     right: -6px;
     background: var(--text-color);
     color: var(--bg-color);
     font-size: 9px;
-    width: 14px;
-    height: 14px;
+    width: 15px;
+    height: 15px;
     border-radius: 50%;
     display: none;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     border: 1px solid var(--bg-color);
+    z-index: 10;
 }
 
-.custom-swatch-wrapper:hover .delete-swatch {
+.custom-theme-wrapper:hover .delete-theme {
     display: flex;
+}
+
+.theme-accent-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    display: inline-block;
+    flex-shrink: 0;
 }
 
 .custom-select-wrapper {
