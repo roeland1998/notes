@@ -390,13 +390,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     return luminance < 128 ? '#F3D8C7' : '#1E1D1B';
   }
 
-  document.getElementById('btn-callout').addEventListener('click', () => {
+document.getElementById('btn-callout').addEventListener('click', () => {
     editor.focus();
-    const currentAccent = accentPicker.value;
-    const computedTextColor = getContrastingTextColor(currentAccent);
 
     const calloutHTML = `
-      <div class="notion-callout" style="background-color: ${currentAccent}; color: ${computedTextColor};">
+      <div class="notion-callout">
         <div class="notion-callout-content" contenteditable="true" data-placeholder="Schrijf hier je belangrijke punt of tip..."></div>
       </div>
       <p><br></p>
