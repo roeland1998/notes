@@ -73,41 +73,6 @@
         <div class="control-section">
             <span class="section-label">Vormgeving</span>
 
-            <div class="control-group">
-                <label for="bg-hex">Achtergrond</label>
-                <div class="color-input-wrapper">
-                    <input type="color" id="bg-picker" value="#FAF4EE">
-                    <input type="text" id="bg-hex" class="hex-input" value="#FAF4EE" maxlength="7" spellcheck="false">
-                </div>
-            </div>
-
-            <div class="control-group">
-                <label for="text-hex">Tekstkleur</label>
-                <div class="color-input-wrapper">
-                    <input type="color" id="text-picker" value="#874800">
-                    <input type="text" id="text-hex" class="hex-input" value="#874800" maxlength="7" spellcheck="false">
-                </div>
-            </div>
-
-            <div class="control-group">
-                <label for="accent-hex">Accentkleur (Tip Box)</label>
-                <div class="color-input-wrapper">
-                    <input type="color" id="accent-picker" value="#5F85FF">
-                    <input type="text" id="accent-hex" class="hex-input" value="#5F85FF" maxlength="7" spellcheck="false">
-                </div>
-            </div>
-
-            <!-- Eigen Opgeslagen Sferen Sectie -->
-            <div class="control-group" style="margin-top: 4px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                    <label>Mijn Sferen</label>
-                    <button type="button" id="btn-save-theme" class="folder-btn" title="Huidige kleurencombinatie opslaan">＋ Bewaar</button>
-                </div>
-                <div id="custom-presets-container" style="display: flex; flex-direction: column; gap: 6px;">
-                    <!-- Wordt dynamisch gevuld met stijlvolle preview-knoppen -->
-                </div>
-            </div>
-
             <!-- Tekstgrootte Stepper -->
             <div class="control-group" style="margin-top: 8px;">
                 <label>Tekstgrootte</label>
@@ -172,9 +137,40 @@
             </div>
         </div>
 
-        <div class="control-sidebar-footer">
-            <button type="button" class="primary-btn" id="btn-download">↓ Exporteer .TXT</button>
-        </div>
+        <div class="control-group">
+                <label for="bg-hex">Achtergrond</label>
+                <div class="color-input-wrapper">
+                    <input type="color" id="bg-picker" value="#FAF4EE">
+                    <input type="text" id="bg-hex" class="hex-input" value="#FAF4EE" maxlength="7" spellcheck="false">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="text-hex">Tekstkleur</label>
+                <div class="color-input-wrapper">
+                    <input type="color" id="text-picker" value="#874800">
+                    <input type="text" id="text-hex" class="hex-input" value="#874800" maxlength="7" spellcheck="false">
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="accent-hex">Accentkleur (Tip Box)</label>
+                <div class="color-input-wrapper">
+                    <input type="color" id="accent-picker" value="#5F85FF">
+                    <input type="text" id="accent-hex" class="hex-input" value="#5F85FF" maxlength="7" spellcheck="false">
+                </div>
+            </div>
+
+            <!-- Eigen Opgeslagen Sferen Sectie -->
+            <div class="control-group" style="margin-top: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <label>Mijn Sferen</label>
+                    <button type="button" id="btn-save-theme" class="folder-btn" title="Huidige kleurencombinatie opslaan">＋ Bewaar</button>
+                </div>
+                <div id="custom-presets-container" style="display: flex; flex-direction: column; gap: 6px;">
+                    <!-- Wordt dynamisch gevuld met stijlvolle preview-knoppen -->
+                </div>
+            </div>
     </aside>
 
     <!-- Custom Emoji Picker Modal -->
