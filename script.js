@@ -17,6 +17,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const textHex = document.getElementById('text-hex');
     const accentPicker = document.getElementById('accent-picker');
     const accentHex = document.getElementById('accent-hex');
+    const btnSaveTheme = document.getElementById('btn-save-theme');
+    const customPresetsContainer = document.getElementById('custom-presets-container');
 
     // Tekstgrootte knoppen & display
     const fontSizeDec = document.getElementById('font-size-dec');
@@ -66,21 +68,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --- 1. LOKALE MAP KOPPELEN & AUTOMATISCH HERSTELLEN ---
+    let savedDirHandle = null;
+
     async function initFolder(handle) {
         rootDirHandle = handle;
         await renderFileTree();
         btnNewFile.removeAttribute('disabled');
+        btnOpenFolder.textContent = '＋ Map';
     }
 
-    // Controleer of er al een map opgeslagen was bij opstarten
     try {
-        const savedHandle = await getHandleFromIDB();
-        if (savedHandle) {
-            if ((await savedHandle.queryPermission({ mode: 'readwrite' })) === 'granted') {
-                await initFolder(savedHandle);
+        savedDirHandle = await getHandleFromIDB();
+        if (savedDirHandle) {
+            if ((await savedDirHandle.queryPermission({ mode: 'readwrite' })) === 'granted') {
+                await initFolder(savedDirHandle);
             } else {
-                // Vraag toestemming bij klik als browser dit vereist
-                btnOpenFolder.textContent = '📁 Koppel map opnieuw';
+                btnOpenFolder.textContent = `↻ Open "${savedDirHandle.name}"`;
             }
         }
     } catch (e) {
@@ -89,10 +92,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     btnOpenFolder.addEventListener('click', async () => {
         try {
+            if (savedDirHandle && !rootDirHandle) {
+                const perm = await savedDirHandle.requestPermission({ mode: 'readwrite' });
+                if (perm === 'granted') {
+                    await initFolder(savedDirHandle);
+                    return;
+                }
+            }
             rootDirHandle = await window.showDirectoryPicker();
+            savedDirHandle = rootDirHandle;
             await saveHandleToIDB(rootDirHandle);
             await initFolder(rootDirHandle);
-            btnOpenFolder.textContent = '＋ Map';
         } catch (err) {
             if (err.name !== 'AbortError') console.error(err);
         }
@@ -324,7 +334,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         e.target.value = '';
     });
 
-    // --- 5. VORMGEVING, KLEUREN, TEKSTGROOTTE & FONT PREVIEW ---
+    // --- 5. VORMGEVING, KLEUREN, TEKSTGROOTTE & CUSTOM SFEREN ---
     function normalizeHex(value) {
         let hex = value.trim();
         if (!hex.startsWith('#')) hex = '#' + hex;
@@ -337,6 +347,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         bgPicker.value = color;
         if (updateInput) bgHex.value = color;
         localStorage.setItem('atelier_bg', color);
+
+        const metaThemeColor = document.getElementById('theme-color-meta');
+        if (metaThemeColor) {
+            metaThemeColor.setAttribute('content', color);
+        }
     }
 
     function updateTextColor(color, updateInput = true) {
@@ -406,6 +421,74 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     });
+
+    // --- LOGICA VOOR EIGEN OPGESLAGEN SFEREN ---
+    function getCustomThemes() {
+        try {
+            return JSON.parse(localStorage.getItem('atelier_custom_themes')) || [];
+        } catch {
+            return [];
+        }
+    }
+
+    function renderCustomThemes() {
+        customPresetsContainer.innerHTML = '';
+        const themes = getCustomThemes();
+
+        if (themes.length === 0) {
+            customPresetsContainer.innerHTML = '<span style="font-size: 11px; opacity: 0.4;">Nog geen eigen sferen opgeslagen.</span>';
+            return;
+        }
+
+        themes.forEach((theme, index) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'custom-swatch-wrapper';
+
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'swatch';
+            btn.style.background = theme.bg;
+            btn.title = `Achtergrond: ${theme.bg}, Tekst: ${theme.text}`;
+            btn.addEventListener('click', () => {
+                updateBgColor(theme.bg);
+                updateTextColor(theme.text);
+                if (theme.accent) updateAccentColor(theme.accent);
+            });
+
+            const delBtn = document.createElement('span');
+            delBtn.className = 'delete-swatch';
+            delBtn.textContent = '×';
+            delBtn.title = 'Verwijder sfeer';
+            delBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                themes.splice(index, 1);
+                localStorage.setItem('atelier_custom_themes', JSON.stringify(themes));
+                renderCustomThemes();
+            });
+
+            wrapper.appendChild(btn);
+            wrapper.appendChild(delBtn);
+            customPresetsContainer.appendChild(wrapper);
+        });
+    }
+
+    btnSaveTheme.addEventListener('click', () => {
+        const themes = getCustomThemes();
+        const newTheme = {
+            bg: bgPicker.value.toUpperCase(),
+            text: textPicker.value.toUpperCase(),
+            accent: accentPicker.value.toUpperCase()
+        };
+
+        // Voorkom dubbele exact dezelfde sferen
+        if (!themes.some(t => t.bg === newTheme.bg && t.text === newTheme.text && t.accent === newTheme.accent)) {
+            themes.push(newTheme);
+            localStorage.setItem('atelier_custom_themes', JSON.stringify(themes));
+            renderCustomThemes();
+        }
+    });
+
+    renderCustomThemes();
 
     // Custom Font Dropdown Logica met --editor-font
     const fontDropdown = document.getElementById('font-dropdown');
