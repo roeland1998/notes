@@ -311,13 +311,12 @@ body {
     margin-bottom: 0.25em;
 }
 
-/* Links in de editor: geen underline en in de accentkleur */
+/* Links in editor: accentkleur, geen onderstreping */
 #editor a {
     color: var(--accent-color);
     text-decoration: none;
     cursor: pointer;
     font-weight: 500;
-    transition: opacity 0.15s;
 }
 
 #editor a:hover {
@@ -547,7 +546,7 @@ input[type="color"]::-webkit-color-swatch {
     text-transform: uppercase;
 }
 
-/* Nieuwe stijl voor opgeslagen sfeer-knoppen ("Hallo" button met accent-bolletje) */
+/* Stijl voor de "Hallo" sfeer-knoppen met accent-bolletje */
 .custom-theme-btn {
     width: 100%;
     padding: 7px 10px;
