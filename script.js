@@ -392,12 +392,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 document.getElementById('btn-callout').addEventListener('click', () => {
     editor.focus();
-    
-    // Pakt direct de actuele waarde van het accentkleur-invoerveld:
-    const currentAccent = accentPicker.value;
 
     const calloutHTML = `
-      <div class="notion-callout" style="background-color: ${currentAccent};">
+      <div class="notion-callout">
         <div class="notion-callout-content" contenteditable="true" data-placeholder="Schrijf hier je belangrijke punt of tip..."></div>
       </div>
       <p><br></p>
