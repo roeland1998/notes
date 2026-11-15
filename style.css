@@ -329,11 +329,13 @@ body {
     padding: 16px 20px;
     border-radius: 12px;
     margin: 1.4em 0;
+    background-color: var(--accent-color);
+    color: color-mix(in srgb, var(--text-color) 85%, #000); 
     border: 1px solid color-mix(in srgb, var(--text-color) 15%, transparent);
     gap: 12px;
     width: fit-content;
     max-width: 100%;
-    transition: transform 0.15s, box-shadow 0.15s;
+    transition: transform 0.15s, box-shadow 0.15s, background-color 0.35s ease;
 }
 
 .notion-callout[data-href] {
