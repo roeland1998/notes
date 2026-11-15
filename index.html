@@ -9,6 +9,9 @@
     <!-- Favicon -->
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗒️</text></svg>">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.png">
+    <meta name="theme-color" id="theme-color-meta" content="#F7F5F0">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -97,7 +100,7 @@
             </div>
 
             <div class="control-group">
-                <label>Sferen</label>
+                <label>Sferen (Standaard)</label>
                 <div class="presets">
                     <button type="button" class="swatch" style="background: #F7F5F0;" data-bg="#F7F5F0"
                         data-text="#1E1D1B" data-accent="#EFECE6" title="Warm Papier"></button>
@@ -107,6 +110,18 @@
                         data-text="#1B2B22" data-accent="#D5E0D7" title="Salie & Mos"></button>
                     <button type="button" class="swatch" style="background: #23192D;" data-bg="#23192D"
                         data-text="#F3D8C7" data-accent="#31223E" title="Nacht & Perzik"></button>
+                </div>
+            </div>
+
+            <!-- Eigen Opgeslagen Sferen Sectie -->
+            <div class="control-group">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <label>Mijn Sferen</label>
+                    <button type="button" id="btn-save-theme" class="folder-btn"
+                        title="Huidige kleurencombinatie opslaan">＋ Bewaar</button>
+                </div>
+                <div id="custom-presets-container" class="presets" style="flex-wrap: wrap; gap: 8px; margin-top: 4px;">
+                    <!-- Wordt dynamisch gevuld -->
                 </div>
             </div>
 
@@ -201,6 +216,26 @@
                 <button type="button" class="emoji-option">💬</button>
                 <button type="button" class="emoji-option">📁</button>
                 <button type="button" class="emoji-option">☕</button>
+                <button type="button" class="emoji-option">❤️</button>
+                <button type="button" class="emoji-option">🌟</button>
+                <button type="button" class="emoji-option">🛠️</button>
+                <button type="button" class="emoji-option">🎵</button>
+                <button type="button" class="emoji-option">🗂️</button>
+                <button type="button" class="emoji-option">📅</button>
+                <button type="button" class="emoji-option">🧩</button>
+                <button type="button" class="emoji-option">🕰️</button>
+                <button type="button" class="emoji-option">🌈</button>
+                <button type="button" class="emoji-option">🛋️</button>
+                <button type="button" class="emoji-option">🖼️</button>
+                <button type="button" class="emoji-option">🧵</button>
+                <button type="button" class="emoji-option">🧶</button>
+                <button type="button" class="emoji-option">🧪</button>
+                <button type="button" class="emoji-option">🧬</button>
+                <button type="button" class="emoji-option">🧹</button>
+                <button type="button" class="emoji-option">🧼</button>
+                <button type="button" class="emoji-option">🧯</button>
+                <button type="button" class="emoji-option">🧰</button>
+                <button type="button" class="emoji-option">🧲</button>
             </div>
             <button type="button" id="close-emoji-modal" class="secondary-btn"
                 style="width: 100%; margin-top: 12px;">Sluiten</button>
