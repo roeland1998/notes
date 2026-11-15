@@ -320,6 +320,8 @@ body {
     border: 1px solid color-mix(in srgb, var(--text-color) 15%, transparent);
     gap: 12px;
     width: 100%;
+    width: fit-content;
+    max-width: 100%;
 }
 
 .notion-callout-content {
