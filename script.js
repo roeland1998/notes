@@ -257,7 +257,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await saveCurrentFile();
   });
 
-  // --- 4. TEKSTOPMAAK, TOOLBARS & TAB ---
+  // --- 4. TEKSTOPMAAK, LINKS, TOOLBARS & TAB ---
   document.querySelectorAll('[data-command]').forEach(btn => {
     btn.addEventListener('click', () => {
       editor.focus();
@@ -270,6 +270,75 @@ document.addEventListener('DOMContentLoaded', async () => {
       editor.focus();
       document.execCommand('formatBlock', false, btn.dataset.block);
     });
+  });
+
+  document.getElementById('btn-link').addEventListener('click', () => {
+    const selection = window.getSelection();
+    if (!selection.rangeCount) return;
+
+    const range = selection.getRangeAt(0);
+    const container = range.commonAncestorContainer;
+    const element = container.nodeType === 3 ? container.parentElement : container;
+    const callout = element ? element.closest('.notion-callout') : null;
+
+    if (callout && selection.isCollapsed) {
+      const currentUrl = callout.getAttribute('data-href') || 'https://';
+      const url = prompt('Link voor deze Tip Box (laat leeg om te verwijderen):', currentUrl);
+      if (url === null) return;
+
+      if (url.trim() === '' || url.trim() === 'https://') {
+        callout.removeAttribute('data-href');
+        callout.removeAttribute('title');
+      } else {
+        const finalUrl = url.startsWith('http://') || url.startsWith('https://') ? url.trim() : 'https://' + url.trim();
+        callout.setAttribute('data-href', finalUrl);
+        callout.setAttribute('title', `Open link: ${finalUrl} (Alt+klik om tekst te bewerken)`);
+      }
+      saveCurrentFile();
+      return;
+    }
+
+    if (!selection.isCollapsed) {
+      const existingLink = element ? element.closest('a') : null;
+      const currentUrl = existingLink ? existingLink.getAttribute('href') : 'https://';
+      const url = prompt('Voer de URL in (laat leeg om link te verwijderen):', currentUrl);
+      if (url === null) return;
+
+      if (url.trim() === '' || url.trim() === 'https://') {
+        document.execCommand('unlink', false, null);
+      } else {
+        const finalUrl = url.startsWith('http://') || url.startsWith('https://') ? url.trim() : 'https://' + url.trim();
+        document.execCommand('createLink', false, finalUrl);
+        const newAnchor = window.getSelection().anchorNode.parentElement.closest('a');
+        if (newAnchor) {
+          newAnchor.setAttribute('target', '_blank');
+          newAnchor.setAttribute('rel', 'noopener noreferrer');
+        }
+      }
+      saveCurrentFile();
+    } else {
+      alert('Selecteer eerst een stukje tekst, of klik met je cursor in een Tip Box om daar een link aan te hangen.');
+    }
+  });
+
+  editor.addEventListener('click', (e) => {
+    if (e.altKey) return;
+
+    const anchor = e.target.closest('a');
+    if (anchor && anchor.href) {
+      e.preventDefault();
+      window.open(anchor.href, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    const callout = e.target.closest('.notion-callout[data-href]');
+    if (callout) {
+      const url = callout.getAttribute('data-href');
+      if (url) {
+        e.preventDefault();
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
+    }
   });
 
   editor.addEventListener('keydown', (e) => {
@@ -418,17 +487,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   fontSizeDec.addEventListener('click', () => updateFontSize(currentFontSize - 1, true));
   fontSizeInc.addEventListener('click', () => updateFontSize(currentFontSize + 1, true));
 
-  document.querySelectorAll('.swatch').forEach(swatch => {
-    swatch.addEventListener('click', () => {
-      updateBgColor(swatch.dataset.bg);
-      updateTextColor(swatch.dataset.text);
-      if (swatch.dataset.accent) {
-        updateAccentColor(swatch.dataset.accent);
-      }
-    });
-  });
-
-  // --- EIGEN OPGESLAGEN SFEREN ---
+  // --- EIGEN OPGESLAGEN SFEREN (Met "Hallo" knop & accent-bolletje) ---
   function getCustomThemes() {
     try {
       return JSON.parse(localStorage.getItem('atelier_custom_themes')) || [];
@@ -448,13 +507,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     themes.forEach((theme, index) => {
       const wrapper = document.createElement('div');
-      wrapper.className = 'custom-swatch-wrapper';
+      wrapper.className = 'custom-theme-wrapper';
 
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = 'swatch';
-      btn.style.background = theme.bg;
-      btn.title = `Achtergrond: ${theme.bg}`;
+      btn.className = 'custom-theme-btn';
+      btn.style.backgroundColor = theme.bg;
+      btn.style.color = theme.text;
+      btn.innerHTML = `<span>Hallo</span><span class="theme-accent-dot" style="background-color: ${theme.accent};"></span>`;
+      btn.title = `Achtergrond: ${theme.bg}, Tekst: ${theme.text}, Accent: ${theme.accent}`;
+      
       btn.addEventListener('click', () => {
         updateBgColor(theme.bg);
         updateTextColor(theme.text);
@@ -462,7 +524,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
       const delBtn = document.createElement('span');
-      delBtn.className = 'delete-swatch';
+      delBtn.className = 'delete-theme';
       delBtn.textContent = '×';
       delBtn.title = 'Verwijder sfeer';
       delBtn.addEventListener('click', (e) => {
