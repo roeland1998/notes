@@ -257,7 +257,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await saveCurrentFile();
   });
 
-  // --- 4. TEKSTOPMAAK, LINKS, TOOLBARS & TAB ---
+  // --- 4. TEKSTOPMAAK, LINKS & TOOLBARS ---
   document.querySelectorAll('[data-command]').forEach(btn => {
     btn.addEventListener('click', () => {
       editor.focus();
@@ -272,7 +272,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
+  // Robuuste link-functionaliteit voor tekstselectie óf Tip Box
   document.getElementById('btn-link').addEventListener('click', () => {
+    editor.focus();
     const selection = window.getSelection();
     if (!selection.rangeCount) return;
 
@@ -281,6 +283,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const element = container.nodeType === 3 ? container.parentElement : container;
     const callout = element ? element.closest('.notion-callout') : null;
 
+    // Als de cursor in een Tip Box staat (zonder geselecteerde tekst): maak de hele box klikbaar
     if (callout && selection.isCollapsed) {
       const currentUrl = callout.getAttribute('data-href') || 'https://';
       const url = prompt('Link voor deze Tip Box (laat leeg om te verwijderen):', currentUrl);
@@ -292,12 +295,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else {
         const finalUrl = url.startsWith('http://') || url.startsWith('https://') ? url.trim() : 'https://' + url.trim();
         callout.setAttribute('data-href', finalUrl);
-        callout.setAttribute('title', `Open link: ${finalUrl} (Alt+klik om tekst te bewerken)`);
+        callout.setAttribute('title', `Open link: ${finalUrl}`);
       }
       saveCurrentFile();
       return;
     }
 
+    // Als er tekst geselecteerd is: koppel een link aan de tekst
     if (!selection.isCollapsed) {
       const existingLink = element ? element.closest('a') : null;
       const currentUrl = existingLink ? existingLink.getAttribute('href') : 'https://';
@@ -309,20 +313,27 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else {
         const finalUrl = url.startsWith('http://') || url.startsWith('https://') ? url.trim() : 'https://' + url.trim();
         document.execCommand('createLink', false, finalUrl);
-        const newAnchor = window.getSelection().anchorNode.parentElement.closest('a');
-        if (newAnchor) {
-          newAnchor.setAttribute('target', '_blank');
-          newAnchor.setAttribute('rel', 'noopener noreferrer');
+        
+        // Zorg dat de gegenereerde link in een nieuw tabblad opent
+        const sel = window.getSelection();
+        if (sel.rangeCount > 0) {
+          const node = sel.getRangeAt(0).commonAncestorContainer;
+          const anchor = node.nodeType === 3 ? node.parentElement.closest('a') : node.closest('a');
+          if (anchor) {
+            anchor.setAttribute('target', '_blank');
+            anchor.setAttribute('rel', 'noopener noreferrer');
+          }
         }
       }
       saveCurrentFile();
     } else {
-      alert('Selecteer eerst een stukje tekst, of klik met je cursor in een Tip Box om daar een link aan te hangen.');
+      alert('Selecteer eerst een stukje tekst om er een link van te maken, of klik in een Tip Box.');
     }
   });
 
+  // Klikgedrag voor links en gelinkte Tip Boxes
   editor.addEventListener('click', (e) => {
-    if (e.altKey) return;
+    if (e.altKey) return; // Houd Alt ingedrukt om tekst aan te passen zonder dat de link opent
 
     const anchor = e.target.closest('a');
     if (anchor && anchor.href) {
@@ -409,7 +420,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     e.target.value = '';
   });
 
-  // --- 5. VORMGEVING, KLEUREN & CUSTOM SFEREN ---
+  // --- 5. VORMGEVING, KLEUREN & CUSTOM SFEREN ("Hallo" knoppen) ---
   function normalizeHex(value) {
     let hex = value.trim();
     if (!hex.startsWith('#')) hex = '#' + hex;
@@ -487,7 +498,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   fontSizeDec.addEventListener('click', () => updateFontSize(currentFontSize - 1, true));
   fontSizeInc.addEventListener('click', () => updateFontSize(currentFontSize + 1, true));
 
-  // --- EIGEN OPGESLAGEN SFEREN (Met "Hallo" knop & accent-bolletje) ---
+  // --- OPGESLAGEN SFEREN RENDEREN ---
   function getCustomThemes() {
     try {
       return JSON.parse(localStorage.getItem('atelier_custom_themes')) || [];
