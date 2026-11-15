@@ -394,7 +394,7 @@ document.getElementById('btn-callout').addEventListener('click', () => {
     editor.focus();
 
     const calloutHTML = `
-      <div class="notion-callout">
+      <div class="notion-callout" style="background-color: var(--accent-color);">
         <div class="notion-callout-content" contenteditable="true" data-placeholder="Schrijf hier je belangrijke punt of tip..."></div>
       </div>
       <p><br></p>
