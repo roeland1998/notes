@@ -537,10 +537,38 @@ input[type="color"]::-webkit-color-swatch {
     border: 1px solid color-mix(in srgb, var(--text-color) 25%, transparent);
     cursor: pointer;
     transition: transform 0.2s;
+    position: relative;
 }
 
 .swatch:hover {
     transform: scale(1.15);
+}
+
+/* Stijl voor opgeslagen custom sfeer knop met verwijder kruisje */
+.custom-swatch-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.custom-swatch-wrapper .delete-swatch {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: var(--text-color);
+    color: var(--bg-color);
+    font-size: 9px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: 1px solid var(--bg-color);
+}
+
+.custom-swatch-wrapper:hover .delete-swatch {
+    display: flex;
 }
 
 .custom-select-wrapper {
