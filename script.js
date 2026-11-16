@@ -272,36 +272,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // Robuuste link-functionaliteit voor tekstselectie óf Tip Box
-  document.getElementById('btn-link').addEventListener('click', () => {
-    editor.focus();
-    const selection = window.getSelection();
-    if (!selection.rangeCount) return;
-
-    const range = selection.getRangeAt(0);
-    const container = range.commonAncestorContainer;
-    const element = container.nodeType === 3 ? container.parentElement : container;
-    const callout = element ? element.closest('.notion-callout') : null;
-
-    // Als de cursor in een Tip Box staat (zonder geselecteerde tekst): maak de hele box klikbaar
-    if (callout && selection.isCollapsed) {
-      const currentUrl = callout.getAttribute('data-href') || 'https://';
-      const url = prompt('Link voor deze Tip Box (laat leeg om te verwijderen):', currentUrl);
-      if (url === null) return;
-
-      if (url.trim() === '' || url.trim() === 'https://') {
-        callout.removeAttribute('data-href');
-        callout.removeAttribute('title');
-      } else {
-        const finalUrl = url.startsWith('http://') || url.startsWith('https://') ? url.trim() : 'https://' + url.trim();
-        callout.setAttribute('data-href', finalUrl);
-        callout.setAttribute('title', `Open link: ${finalUrl}`);
-      }
-      saveCurrentFile();
-      return;
-    }
-
-// --- MARKER FUNCTIONALITEIT ---
+  // --- MARKER FUNCTIONALITEIT ---
   document.getElementById('btn-highlight').addEventListener('click', () => {
     editor.focus();
     const selection = window.getSelection();
@@ -330,6 +301,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     selection.removeAllRanges();
     saveCurrentFile();
   });
+
+  // Robuuste link-functionaliteit voor tekstselectie óf Tip Box
+  document.getElementById('btn-link').addEventListener('click', () => {
+    editor.focus();
+    const selection = window.getSelection();
+    if (!selection.rangeCount) return;
+
+    const range = selection.getRangeAt(0);
+    const container = range.commonAncestorContainer;
+    const element = container.nodeType === 3 ? container.parentElement : container;
+    const callout = element ? element.closest('.notion-callout') : null;
+
+    // Als de cursor in een Tip Box staat (zonder geselecteerde tekst): maak de hele box klikbaar
+    if (callout && selection.isCollapsed) {
+      const currentUrl = callout.getAttribute('data-href') || 'https://';
+      const url = prompt('Link voor deze Tip Box (laat leeg om te verwijderen):', currentUrl);
+      if (url === null) return;
+
+      if (url.trim() === '' || url.trim() === 'https://') {
+        callout.removeAttribute('data-href');
+        callout.removeAttribute('title');
+      } else {
+        const finalUrl = url.startsWith('http://') || url.startsWith('https://') ? url.trim() : 'https://' + url.trim();
+        callout.setAttribute('data-href', finalUrl);
+        callout.setAttribute('title', `Open link: ${finalUrl}`);
+      }
+      saveCurrentFile();
+      return;
+    }
 
     // Als er tekst geselecteerd is: koppel een link aan de tekst
     if (!selection.isCollapsed) {
