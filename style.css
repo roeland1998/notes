@@ -800,12 +800,10 @@ button.primary-btn:hover {
     background: color-mix(in srgb, var(--text-color) 15%, transparent);
 }
 
-/* Stijl voor de markeerstift over geselecteerde tekst */
 .text-highlight {
-    background-color: var(--accent-color);
-    color: var(--bg-color);
-    padding: 0.15em 0.35em;
-    border-radius: 4px;
+    background-color: var(--accent-color) !important;
+    color: var(--bg-color) !important;
+    padding: 0.15em 0.15em;
     box-decoration-break: clone;
     -webkit-box-decoration-break: clone;
 }
