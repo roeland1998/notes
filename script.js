@@ -301,21 +301,33 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // --- MARKER FUNCTIONALITEIT ---
+// --- MARKER FUNCTIONALITEIT ---
   document.getElementById('btn-highlight').addEventListener('click', () => {
     editor.focus();
     const selection = window.getSelection();
     if (!selection.rangeCount || selection.isCollapsed) {
-      alert('Selecteer eerst een woord of zin om te markeren.');
+      alert('Selecteer eerst een woord of zin in je tekst.');
       return;
     }
 
     const range = selection.getRangeAt(0);
+    
+    // Maak het span element aan
     const span = document.createElement('span');
     span.className = 'text-highlight';
-    span.appendChild(range.extractContents());
-    range.insertNode(span);
     
+    try {
+      // Probeer de selectie direct te omcirkelen met de span
+      span.appendChild(range.extractContents());
+      range.insertNode(span);
+    } catch (e) {
+      // Fallback als de selectie over meerdere HTML-nodes loopt
+      const html = `<span class="text-highlight">${selection.toString()}</span>`;
+      document.execCommand('insertHTML', false, html);
+    }
+
+    // Wis de selectie en sla op
+    selection.removeAllRanges();
     saveCurrentFile();
   });
 
