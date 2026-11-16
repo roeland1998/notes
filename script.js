@@ -301,6 +301,24 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    // --- MARKER FUNCTIONALITEIT ---
+  document.getElementById('btn-highlight').addEventListener('click', () => {
+    editor.focus();
+    const selection = window.getSelection();
+    if (!selection.rangeCount || selection.isCollapsed) {
+      alert('Selecteer eerst een woord of zin om te markeren.');
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+    const span = document.createElement('span');
+    span.className = 'text-highlight';
+    span.appendChild(range.extractContents());
+    range.insertNode(span);
+    
+    saveCurrentFile();
+  });
+
     // Als er tekst geselecteerd is: koppel een link aan de tekst
     if (!selection.isCollapsed) {
       const existingLink = element ? element.closest('a') : null;
