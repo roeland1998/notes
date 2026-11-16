@@ -272,7 +272,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-// --- MARKER FUNCTIONALITEIT (VEILIG VOOR OPSOMMINGEN) ---
+// --- MARKER FUNCTIONALITEIT (ULTRA-ROBUUST VOOR LIJSTEN) ---
   document.getElementById('btn-highlight').addEventListener('click', () => {
     editor.focus();
     const selection = window.getSelection();
@@ -282,44 +282,41 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const range = selection.getRangeAt(0);
-    let container = range.commonAncestorContainer;
+    const container = range.commonAncestorContainer;
     
-    // Check of we al binnen een bestaande highlight zitten (voor de toggle-functie)
-    let highlightSpan = container.nodeType === 3 ? container.parentElement.closest('.text-highlight') : container.closest('.text-highlight');
+    // Kijk of de selectie al in een highlight zit (voor de toggle-functie)
+    const highlightElement = container.nodeType === 3 ? container.parentElement.closest('.text-highlight') : container.closest('.text-highlight');
 
-    if (highlightSpan) {
-      // ALS HET AL GEMARKEERD IS: Haal de markering netjes weg
-      const parent = highlightSpan.parentNode;
-      while (highlightSpan.firstChild) {
-        parent.insertBefore(highlightSpan.firstChild, highlightSpan);
+    if (highlightElement) {
+      // ALS HET AL GEMARKEERD IS: Haal de markering weg en behoud de normale tekst
+      const parent = highlightElement.parentNode;
+      while (highlightElement.firstChild) {
+        parent.insertBefore(highlightElement.firstChild, highlightElement);
       }
-      parent.removeChild(highlightSpan);
+      parent.removeChild(highlightElement);
     } else {
-      // ALS HET NOG NIET IS GEMARKEERD: Wikkel het strak inline in een span
-      const span = document.createElement('span');
-      span.className = 'text-highlight';
+      // ALS HET NOG NIET IS GEMARKEERD: Wikkel het direct in een inline span via HTML
+      const selectedText = selection.toString().trim();
+      if (!selectedText) return;
+
+      const spanHtml = `<span class="text-highlight">${selectedText}</span>`;
       
-      try {
-        // surroundContents werkt alleen als de selectie binnen één node/regel valt
-        span.appendChild(range.extractContents());
-        range.insertNode(span);
-      } catch (e) {
-        // Fallback voor complexere selecties (bijv. over meerdere woorden)
-        const selectedText = selection.toString();
-        if (selectedText) {
-          const newNode = document.createElement('span');
-          newNode.className = 'text-highlight';
-          newNode.textContent = selectedText;
-          range.deleteContents();
-          range.insertNode(newNode);
-        }
+      // Vervang de selectie direct feilloos met de gemarkeerde HTML
+      range.deleteContents();
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = spanHtml;
+      const frag = document.createDocumentFragment();
+      let node;
+      while ((node = tempDiv.firstChild)) {
+        frag.appendChild(node);
       }
+      range.insertNode(frag);
     }
 
     selection.removeAllRanges();
     saveCurrentFile();
   });
-
+  
   // Robuuste link-functionaliteit voor tekstselectie óf Tip Box
   document.getElementById('btn-link').addEventListener('click', () => {
     editor.focus();
