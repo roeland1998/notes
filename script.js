@@ -272,7 +272,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // --- MARKER FUNCTIONALITEIT ---
+  // --- MARKER FUNCTIONALITEIT (MET TOGGLE AAN/UIT) ---
   document.getElementById('btn-highlight').addEventListener('click', () => {
     editor.focus();
     const selection = window.getSelection();
@@ -282,22 +282,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const range = selection.getRangeAt(0);
+    let container = range.commonAncestorContainer;
     
-    // Maak het span element aan
-    const span = document.createElement('span');
-    span.className = 'text-highlight';
-    
-    try {
-      // Probeer de selectie direct te omcirkelen met de span
-      span.appendChild(range.extractContents());
-      range.insertNode(span);
-    } catch (e) {
-      // Fallback als de selectie over meerdere HTML-nodes loopt
-      const html = `<span class="text-highlight">${selection.toString()}</span>`;
-      document.execCommand('insertHTML', false, html);
+    // Check of we al binnen een bestaande highlight / span zitten
+    let highlightSpan = container.nodeType === 3 ? container.parentElement.closest('.text-highlight') : container.closest('.text-highlight');
+
+    if (highlightSpan) {
+      // ALS HET AL GEMARKEERD IS: Haal de markering weg (unwrap)
+      const parent = highlightSpan.parentNode;
+      while (highlightSpan.firstChild) {
+        parent.insertBefore(highlightSpan.firstChild, highlightSpan);
+      }
+      parent.removeChild(highlightSpan);
+    } else {
+      // ALS HET NOG NIET IS GEMARKEERD: Voeg de highlight toe
+      const span = document.createElement('span');
+      span.className = 'text-highlight';
+      
+      try {
+        span.appendChild(range.extractContents());
+        range.insertNode(span);
+      } catch (e) {
+        const html = `<span class="text-highlight">${selection.toString()}</span>`;
+        document.execCommand('insertHTML', false, html);
+      }
     }
 
-    // Wis de selectie en sla op
     selection.removeAllRanges();
     saveCurrentFile();
   });
