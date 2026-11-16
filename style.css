@@ -803,6 +803,7 @@ button.primary-btn:hover {
 .text-highlight {
     background-color: var(--accent-color) !important;
     color: var(--bg-color) !important;
+    display: inline !important;
     padding: 0.14em 0.4em;
     box-decoration-break: clone;
     -webkit-box-decoration-break: clone;
