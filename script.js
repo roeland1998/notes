@@ -272,7 +272,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // --- MARKER FUNCTIONALITEIT (MET TOGGLE AAN/UIT) ---
+// --- MARKER FUNCTIONALITEIT (VEILIG VOOR OPSOMMINGEN) ---
   document.getElementById('btn-highlight').addEventListener('click', () => {
     editor.focus();
     const selection = window.getSelection();
@@ -284,27 +284,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     const range = selection.getRangeAt(0);
     let container = range.commonAncestorContainer;
     
-    // Check of we al binnen een bestaande highlight / span zitten
+    // Check of we al binnen een bestaande highlight zitten (voor de toggle-functie)
     let highlightSpan = container.nodeType === 3 ? container.parentElement.closest('.text-highlight') : container.closest('.text-highlight');
 
     if (highlightSpan) {
-      // ALS HET AL GEMARKEERD IS: Haal de markering weg (unwrap)
+      // ALS HET AL GEMARKEERD IS: Haal de markering netjes weg
       const parent = highlightSpan.parentNode;
       while (highlightSpan.firstChild) {
         parent.insertBefore(highlightSpan.firstChild, highlightSpan);
       }
       parent.removeChild(highlightSpan);
     } else {
-      // ALS HET NOG NIET IS GEMARKEERD: Voeg de highlight toe
+      // ALS HET NOG NIET IS GEMARKEERD: Wikkel het strak inline in een span
       const span = document.createElement('span');
       span.className = 'text-highlight';
       
       try {
+        // surroundContents werkt alleen als de selectie binnen één node/regel valt
         span.appendChild(range.extractContents());
         range.insertNode(span);
       } catch (e) {
-        const html = `<span class="text-highlight">${selection.toString()}</span>`;
-        document.execCommand('insertHTML', false, html);
+        // Fallback voor complexere selecties (bijv. over meerdere woorden)
+        const selectedText = selection.toString();
+        if (selectedText) {
+          const newNode = document.createElement('span');
+          newNode.className = 'text-highlight';
+          newNode.textContent = selectedText;
+          range.deleteContents();
+          range.insertNode(newNode);
+        }
       }
     }
 
