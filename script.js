@@ -1,6 +1,10 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  let rootDirHandle = null;
-  let currentFileHandle = null;
+  // --- GOOGLE DRIVE VIA APPS SCRIPT CONFIGURATIE ---
+  const DRIVE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwCrUm_a5A7nYZLlTNPN2qsEYGSrC53WV7so7g-hgBMFn0ld8sKuiSKahlTmJMBSkiF9Q/exec';
+  const DRIVE_API_TOKEN = 'API_Roeland_2026';
+
+  let isDriveConnected = false;
+  let currentFile = null; // { id, name }
   let saveTimeout = null;
 
   const editor = document.getElementById('editor');
@@ -19,7 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const accentHex = document.getElementById('accent-hex');
   const btnSaveTheme = document.getElementById('btn-save-theme');
   const customPresetsContainer = document.getElementById('custom-presets-container');
-  
+
   const fontSizeDec = document.getElementById('font-size-dec');
   const fontSizeInc = document.getElementById('font-size-inc');
   const fontSizeDisplay = document.getElementById('font-size-display');
@@ -37,142 +41,128 @@ document.addEventListener('DOMContentLoaded', async () => {
   btnCollapseRight.addEventListener('click', () => rightSidebar.classList.add('collapsed'));
   btnExpandRight.addEventListener('click', () => rightSidebar.classList.remove('collapsed'));
 
-  // --- INDEXEDDB VOOR MAP ONTHOUDEN ---
-  function getIDBConnection() {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open('AtelierDB', 1);
-      request.onupgradeneeded = (e) => {
-        e.target.result.createObjectStore('handles');
-      };
-      request.onsuccess = (e) => resolve(e.target.result);
-      request.onerror = (e) => reject(e.target.error);
+  // --- 1. GOOGLE DRIVE KOPPELEN & BESTANDEN LADEN ---
+  async function driveGet(params) {
+    const url = new URL(DRIVE_SCRIPT_URL);
+    url.searchParams.set('token', DRIVE_API_TOKEN);
+    Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+
+    const res = await fetch(url.toString());
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Drive fout');
+    return data;
+  }
+
+  async function drivePost(payload) {
+    const url = new URL(DRIVE_SCRIPT_URL);
+    url.searchParams.set('token', DRIVE_API_TOKEN);
+
+    const res = await fetch(url.toString(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
     });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Drive opslaan mislukt');
+    return data;
   }
 
-  async function saveHandleToIDB(handle) {
-    try {
-      const db = await getIDBConnection();
-      const tx = db.transaction('handles', 'readwrite');
-      tx.objectStore('handles').put(handle, 'rootDir');
-    } catch (err) {
-      console.error('Kon map niet opslaan in IndexedDB:', err);
+  async function initDriveFolder() {
+    if (!DRIVE_SCRIPT_URL || DRIVE_SCRIPT_URL.startsWith('PLAK_HIER')) {
+      alert('Vul eerst jouw Google Apps Script Web App URL in bovenaan script.js.');
+      return;
     }
-  }
 
-  async function getHandleFromIDB() {
-    try {
-      const db = await getIDBConnection();
-      return new Promise((resolve) => {
-        const tx = db.transaction('handles', 'readonly');
-        const req = tx.objectStore('handles').get('rootDir');
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => resolve(null);
-      });
-    } catch {
-      return null;
-    }
-  }
-
-  // --- 1. LOKALE MAP KOPPELEN & AUTOMATISCH HERSTELLEN ---
-  let savedDirHandle = null;
-
-  async function initFolder(handle) {
-    rootDirHandle = handle;
-    await renderFileTree();
+    const data = await driveGet({ action: 'list' });
+    isDriveConnected = true;
+    localStorage.setItem('atelier_drive_linked', '1');
     btnNewFile.removeAttribute('disabled');
-    btnOpenFolder.textContent = '＋ Map';
-  }
-
-  try {
-    savedDirHandle = await getHandleFromIDB();
-    if (savedDirHandle) {
-      if ((await savedDirHandle.queryPermission({ mode: 'readwrite' })) === 'granted') {
-        await initFolder(savedDirHandle);
-      } else {
-        btnOpenFolder.textContent = `↻ Open "${savedDirHandle.name}"`;
-      }
-    }
-  } catch (e) {
-    console.error('Geen gekoppelde map gevonden:', e);
+    btnOpenFolder.textContent = '↻ Map';
+    btnOpenFolder.title = `Verbonden met Drive-map: ${data.folderName}`;
+    renderFileTree(data.items || []);
   }
 
   btnOpenFolder.addEventListener('click', async () => {
     try {
-      if (savedDirHandle && !rootDirHandle) {
-        const perm = await savedDirHandle.requestPermission({ mode: 'readwrite' });
-        if (perm === 'granted') {
-          await initFolder(savedDirHandle);
-          return;
-        }
-      }
-      rootDirHandle = await window.showDirectoryPicker();
-      savedDirHandle = rootDirHandle;
-      await saveHandleToIDB(rootDirHandle);
-      await initFolder(rootDirHandle);
+      btnOpenFolder.textContent = '⏳ Laden...';
+      await initDriveFolder();
     } catch (err) {
-      if (err.name !== 'AbortError') console.error(err);
+      console.error('Kon Google Drive-map niet koppelen:', err);
+      btnOpenFolder.textContent = '＋ Map';
+      alert('Kon geen verbinding maken met Google Drive: ' + err.message);
     }
   });
 
-  async function renderFileTree() {
+  if (localStorage.getItem('atelier_drive_linked') === '1') {
+    initDriveFolder().catch(() => {
+      btnOpenFolder.textContent = '＋ Map';
+    });
+  }
+
+  function renderFileTree(items) {
     fileTree.innerHTML = '';
-    const treeFrag = await buildTree(rootDirHandle);
+    const treeFrag = buildTree(items);
     fileTree.appendChild(treeFrag);
   }
 
-  async function buildTree(dirHandle) {
+  function buildTree(items) {
     const container = document.createElement('div');
     container.className = 'folder-contents';
 
-    for await (const [name, handle] of dirHandle.entries()) {
-      if (name.startsWith('.')) continue;
-
-      if (handle.kind === 'directory') {
+    for (const item of items) {
+      if (item.kind === 'directory') {
         const folderDiv = document.createElement('div');
         folderDiv.className = 'tree-item tree-folder';
-        
+
         const folderName = document.createElement('div');
         folderName.className = 'folder-name';
-        folderName.textContent = `📁 ${name}`;
+        folderName.textContent = `📁 ${item.name}`;
         folderDiv.appendChild(folderName);
 
-        const subContainer = await buildTree(handle);
+        const subContainer = buildTree(item.children || []);
         folderDiv.appendChild(subContainer);
         container.appendChild(folderDiv);
-      } else if (handle.kind === 'file' && (name.endsWith('.txt') || name.endsWith('.md') || name.endsWith('.html'))) {
+      } else if (item.kind === 'file') {
         const fileDiv = document.createElement('div');
         fileDiv.className = 'tree-item';
-        fileDiv.textContent = `📄 ${name}`;
-        fileDiv.addEventListener('click', () => openFile(handle, fileDiv));
+        fileDiv.textContent = `📄 ${item.name}`;
+        fileDiv.addEventListener('click', () => openFile(item, fileDiv));
         container.appendChild(fileDiv);
       }
     }
     return container;
   }
 
-  async function openFile(fileHandle, element) {
-    document.querySelectorAll('.tree-item').forEach(el => el.classList.remove('active'));
-    element.classList.add('active');
+  async function openFile(fileItem, element) {
+    try {
+      document.querySelectorAll('.tree-item').forEach(el => el.classList.remove('active'));
+      element.classList.add('active');
 
-    currentFileHandle = fileHandle;
-    const file = await fileHandle.getFile();
-    const text = await file.text();
+      const data = await driveGet({ action: 'read', id: fileItem.id });
+      currentFile = { id: fileItem.id, name: fileItem.name };
 
-    titleInput.value = file.name.replace(/\.[^/.]+$/, '');
-    
-    let content = text;
-    let emoji = '📄';
-    const emojiMatch = text.match(/^<!--EMOJI:(.*?)-->\n/);
-    if (emojiMatch) {
-      emoji = emojiMatch[1];
-      content = text.replace(emojiMatch[0], '');
+      const text = data.content || '';
+      titleInput.value = fileItem.name.replace(/\.[^/.]+$/, '');
+
+      let content = text;
+      let emoji = '📄';
+      const emojiMatch = text.match(/^<!--EMOJI:(.*?)-->\n/);
+      if (emojiMatch) {
+        emoji = emojiMatch[1];
+        content = text.replace(emojiMatch[0], '');
+      }
+
+      emojiBtn.textContent = emoji;
+      editor.innerHTML = content;
+      editor.setAttribute('contenteditable', 'true');
+      titleInput.removeAttribute('disabled');
+      updateWordCount();
+    } catch (err) {
+      console.error('Fout bij openen van bestand:', err);
+      alert('Kon bestand niet openen uit Google Drive: ' + err.message);
     }
-    
-    emojiBtn.textContent = emoji;
-    editor.innerHTML = content;
-    editor.setAttribute('contenteditable', 'true');
-    titleInput.removeAttribute('disabled');
-    updateWordCount();
   }
 
   // --- EMOJI MODAL LOGICA ---
@@ -180,7 +170,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const closeEmojiModalBtn = document.getElementById('close-emoji-modal');
 
   emojiBtn.addEventListener('click', () => {
-    if (!currentFileHandle) return;
+    if (!currentFile) return;
     emojiModal.classList.add('open');
   });
 
@@ -203,22 +193,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // --- 2. NIEUWE NOTITIE MAKEN ---
+  // --- 2. NIEUWE NOTITIE MAKEN IN DRIVE ---
   btnNewFile.addEventListener('click', async () => {
-    if (!rootDirHandle) return;
+    if (!isDriveConnected) return;
     const rawName = prompt('Naam voor nieuwe notitie:', 'nieuwe-notitie');
     if (!rawName) return;
-    
+
     const fileName = rawName.trim().endsWith('.txt') ? rawName.trim() : rawName.trim() + '.txt';
 
     try {
-      const newFileHandle = await rootDirHandle.getFileHandle(fileName, { create: true });
-      const writable = await newFileHandle.createWritable();
-      await writable.write('<!--EMOJI:📝-->\n');
-      await writable.close();
+      await drivePost({
+        action: 'create',
+        name: fileName,
+        content: '<!--EMOJI:📝-->\n'
+      });
 
-      await renderFileTree();
-      
+      const listData = await driveGet({ action: 'list' });
+      renderFileTree(listData.items || []);
+
       const items = fileTree.querySelectorAll('.tree-item');
       for (const item of items) {
         if (item.textContent.includes(fileName)) {
@@ -227,22 +219,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
     } catch (err) {
-      alert('Kon bestand niet aanmaken: ' + err.message);
+      alert('Kon bestand niet aanmaken in Google Drive: ' + err.message);
     }
   });
 
-  // --- 3. AUTOMATISCH OPSLAAN NAAR SCHIJF ---
+  // --- 3. AUTOMATISCH OPSLAAN NAAR GOOGLE DRIVE ---
   async function saveCurrentFile() {
-    if (!currentFileHandle) return;
+    if (!currentFile || !isDriveConnected) return;
     try {
       const currentEmoji = emojiBtn.textContent || '📄';
       const fileContent = `<!--EMOJI:${currentEmoji}-->\n` + editor.innerHTML;
-      
-      const writable = await currentFileHandle.createWritable();
-      await writable.write(fileContent);
-      await writable.close();
+
+      await drivePost({
+        action: 'save',
+        id: currentFile.id,
+        content: fileContent
+      });
     } catch (err) {
-      console.error('Fout bij opslaan:', err);
+      console.error('Fout bij opslaan naar Drive:', err);
     }
   }
 
@@ -253,8 +247,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   titleInput.addEventListener('input', async () => {
-    if (!currentFileHandle) return;
-    await saveCurrentFile();
+    if (!currentFile) return;
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(saveCurrentFile, 600);
   });
 
   // --- 4. TEKSTOPMAAK, LINKS & TOOLBARS ---
@@ -272,7 +267,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-// --- MARKER FUNCTIONALITEIT (ULTRA-ROBUUST VOOR LIJSTEN) ---
+  // --- MARKER FUNCTIONALITEIT (ULTRA-ROBUUST VOOR LIJSTEN) ---
   document.getElementById('btn-highlight').addEventListener('click', () => {
     editor.focus();
     const selection = window.getSelection();
@@ -283,25 +278,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const range = selection.getRangeAt(0);
     const container = range.commonAncestorContainer;
-    
-    // Kijk of de selectie al in een highlight zit (voor de toggle-functie)
+
     const highlightElement = container.nodeType === 3 ? container.parentElement.closest('.text-highlight') : container.closest('.text-highlight');
 
     if (highlightElement) {
-      // ALS HET AL GEMARKEERD IS: Haal de markering weg en behoud de normale tekst
       const parent = highlightElement.parentNode;
       while (highlightElement.firstChild) {
         parent.insertBefore(highlightElement.firstChild, highlightElement);
       }
       parent.removeChild(highlightElement);
     } else {
-      // ALS HET NOG NIET IS GEMARKEERD: Wikkel het direct in een inline span via HTML
       const selectedText = selection.toString().trim();
       if (!selectedText) return;
 
       const spanHtml = `<span class="text-highlight">${selectedText}</span>`;
-      
-      // Vervang de selectie direct feilloos met de gemarkeerde HTML
+
       range.deleteContents();
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = spanHtml;
@@ -316,8 +307,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     selection.removeAllRanges();
     saveCurrentFile();
   });
-  
-  // Robuuste link-functionaliteit voor tekstselectie óf Tip Box
+
   document.getElementById('btn-link').addEventListener('click', () => {
     editor.focus();
     const selection = window.getSelection();
@@ -328,7 +318,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const element = container.nodeType === 3 ? container.parentElement : container;
     const callout = element ? element.closest('.notion-callout') : null;
 
-    // Als de cursor in een Tip Box staat (zonder geselecteerde tekst): maak de hele box klikbaar
     if (callout && selection.isCollapsed) {
       const currentUrl = callout.getAttribute('data-href') || 'https://';
       const url = prompt('Link voor deze Tip Box (laat leeg om te verwijderen):', currentUrl);
@@ -346,7 +335,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // Als er tekst geselecteerd is: koppel een link aan de tekst
     if (!selection.isCollapsed) {
       const existingLink = element ? element.closest('a') : null;
       const currentUrl = existingLink ? existingLink.getAttribute('href') : 'https://';
@@ -358,8 +346,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else {
         const finalUrl = url.startsWith('http://') || url.startsWith('https://') ? url.trim() : 'https://' + url.trim();
         document.execCommand('createLink', false, finalUrl);
-        
-        // Zorg dat de gegenereerde link in een nieuw tabblad opent
+
         const sel = window.getSelection();
         if (sel.rangeCount > 0) {
           const node = sel.getRangeAt(0).commonAncestorContainer;
@@ -376,9 +363,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // Klikgedrag voor links en gelinkte Tip Boxes
   editor.addEventListener('click', (e) => {
-    if (e.altKey) return; // Houd Alt ingedrukt om tekst aan te passen zonder dat de link opent
+    if (e.altKey) return;
 
     const anchor = e.target.closest('a');
     if (anchor && anchor.href) {
@@ -423,19 +409,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     saveCurrentFile();
   });
 
-  function getContrastingTextColor(hexColor) {
-    let cleanHex = hexColor.replace('#', '');
-    if (cleanHex.length === 3) {
-      cleanHex = cleanHex.split('').map(c => c + c).join('');
-    }
-    const r = parseInt(cleanHex.substr(0, 2), 16);
-    const g = parseInt(cleanHex.substr(2, 2), 16);
-    const b = parseInt(cleanHex.substr(4, 2), 16);
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b);
-    return luminance < 128 ? '#F3D8C7' : '#1E1D1B';
-  }
-
-document.getElementById('btn-callout').addEventListener('click', () => {
+  document.getElementById('btn-callout').addEventListener('click', () => {
     editor.focus();
 
     const calloutHTML = `
@@ -463,7 +437,7 @@ document.getElementById('btn-callout').addEventListener('click', () => {
     e.target.value = '';
   });
 
-  // --- 5. VORMGEVING, KLEUREN & CUSTOM SFEREN ("Hallo" knoppen) ---
+  // --- 5. VORMGEVING, KLEUREN & CUSTOM SFEREN ---
   function normalizeHex(value) {
     let hex = value.trim();
     if (!hex.startsWith('#')) hex = '#' + hex;
@@ -541,7 +515,6 @@ document.getElementById('btn-callout').addEventListener('click', () => {
   fontSizeDec.addEventListener('click', () => updateFontSize(currentFontSize - 1, true));
   fontSizeInc.addEventListener('click', () => updateFontSize(currentFontSize + 1, true));
 
-  // --- OPGESLAGEN SFEREN RENDEREN ---
   function getCustomThemes() {
     try {
       return JSON.parse(localStorage.getItem('atelier_custom_themes')) || [];
@@ -570,7 +543,7 @@ document.getElementById('btn-callout').addEventListener('click', () => {
       btn.style.color = theme.text;
       btn.innerHTML = `<span>Hallo</span><span class="theme-accent-dot" style="background-color: ${theme.accent};"></span>`;
       btn.title = `Achtergrond: ${theme.bg}, Tekst: ${theme.text}, Accent: ${theme.accent}`;
-      
+
       btn.addEventListener('click', () => {
         updateBgColor(theme.bg);
         updateTextColor(theme.text);
@@ -654,7 +627,7 @@ document.getElementById('btn-callout').addEventListener('click', () => {
       fontTriggerText.textContent = option.textContent;
       document.documentElement.style.setProperty('--editor-font', fontValue);
       localStorage.setItem('atelier_font', fontValue);
-      
+
       fontBeforeOpen = fontValue;
       fontDropdown.classList.remove('open');
     });
@@ -664,12 +637,12 @@ document.getElementById('btn-callout').addEventListener('click', () => {
     if (localStorage.getItem('atelier_bg')) updateBgColor(localStorage.getItem('atelier_bg'));
     if (localStorage.getItem('atelier_text')) updateTextColor(localStorage.getItem('atelier_text'));
     if (localStorage.getItem('atelier_accent')) updateAccentColor(localStorage.getItem('atelier_accent'));
-    
+
     const savedFontSize = parseInt(localStorage.getItem('atelier_fontsize'), 10);
     if (!isNaN(savedFontSize)) {
       updateFontSize(savedFontSize, false);
     }
-    
+
     const savedFont = localStorage.getItem('atelier_font') || "'Outfit', sans-serif";
     document.documentElement.style.setProperty('--editor-font', savedFont);
     fontOptions.forEach(opt => {
@@ -680,20 +653,6 @@ document.getElementById('btn-callout').addEventListener('click', () => {
     });
   }
   loadSavedPreferences();
-
-  // --- 6. EXPORTEREN ALS .TXT ---
-  document.getElementById('btn-download').addEventListener('click', () => {
-    const title = titleInput.value.trim() || 'notitie';
-    const blob = new Blob([editor.innerText], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = title.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.txt';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  });
 
   function updateWordCount() {
     const text = editor.innerText.trim();
