@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
   // --- GOOGLE DRIVE VIA APPS SCRIPT CONFIGURATIE ---
-  const DRIVE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwCrUm_a5A7nYZLlTNPN2qsEYGSrC53WV7so7g-hgBMFn0ld8sKuiSKahlTmJMBSkiF9Q/exec';
+  const DRIVE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyypluK0LjtwDXZ9fveYc1HY87q0F0LUqioXssn_A5Dz1dLE_wm6IHiKl_F6ja2-ZNnZQ/exec';
   const DRIVE_API_TOKEN = 'API_Roeland_2026';
 
   let isDriveConnected = false;
