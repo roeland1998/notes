@@ -1,10 +1,10 @@
 document.addEventListener('DOMContentLoaded', async () => {
   // --- GOOGLE DRIVE VIA APPS SCRIPT CONFIGURATIE ---
-  const DRIVE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyypluK0LjtwDXZ9fveYc1HY87q0F0LUqioXssn_A5Dz1dLE_wm6IHiKl_F6ja2-ZNnZQ/exec';
+  const DRIVE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx8qCqR1HURR73apixsRqm3tjbkaEu1sOHV5pZWyCGn-tOaFa2cHBALl3vbprW3hLtl2g/exec';
   const DRIVE_API_TOKEN = 'API_Roeland_2026';
 
   let isDriveConnected = false;
-  let currentFile = null; // { id, name }
+  let currentFile = null; // { id, name, isDoc }
   let saveTimeout = null;
 
   const editor = document.getElementById('editor');
@@ -127,12 +127,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else if (item.kind === 'file') {
         const fileDiv = document.createElement('div');
         fileDiv.className = 'tree-item';
-        fileDiv.textContent = `📄 ${item.name}`;
+        fileDiv.textContent = `${item.isDoc ? '📘' : '📄'} ${item.name}`;
         fileDiv.addEventListener('click', () => openFile(item, fileDiv));
         container.appendChild(fileDiv);
       }
     }
     return container;
+  }
+
+  function escapeHtml(str) {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
   }
 
   async function openFile(fileItem, element) {
@@ -141,17 +148,32 @@ document.addEventListener('DOMContentLoaded', async () => {
       element.classList.add('active');
 
       const data = await driveGet({ action: 'read', id: fileItem.id });
-      currentFile = { id: fileItem.id, name: fileItem.name };
+      const isDoc = Boolean(data.isDoc ?? fileItem.isDoc);
+      currentFile = { id: fileItem.id, name: data.name || fileItem.name, isDoc };
 
-      const text = data.content || '';
-      titleInput.value = fileItem.name.replace(/\.[^/.]+$/, '');
+      const rawText = data.content || '';
+      titleInput.value = (data.name || fileItem.name).replace(/\.[^/.]+$/, '');
 
-      let content = text;
-      let emoji = '📄';
-      const emojiMatch = text.match(/^<!--EMOJI:(.*?)-->\n/);
-      if (emojiMatch) {
-        emoji = emojiMatch[1];
-        content = text.replace(emojiMatch[0], '');
+      let emoji = isDoc ? '📘' : '📄';
+      let content = rawText;
+
+      if (isDoc) {
+        const lines = rawText.split(/\r?\n/);
+        const firstLine = (lines[0] || '').trim();
+        const emojiRegex = /^(\p{Extended_Pictographic}|\p{Emoji_Presentation})$/u;
+        if (emojiRegex.test(firstLine)) {
+          emoji = firstLine;
+          lines.shift();
+        }
+        content = lines
+          .map(line => `<p>${line ? escapeHtml(line) : '<br>'}</p>`)
+          .join('');
+      } else {
+        const emojiMatch = rawText.match(/^<!--EMOJI:(.*?)-->\n/);
+        if (emojiMatch) {
+          emoji = emojiMatch[1];
+          content = rawText.replace(emojiMatch[0], '');
+        }
       }
 
       emojiBtn.textContent = emoji;
@@ -193,19 +215,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // --- 2. NIEUWE NOTITIE MAKEN IN DRIVE ---
+  // --- 2. NIEUW GOOGLE DOCUMENT MAKEN IN DRIVE ---
   btnNewFile.addEventListener('click', async () => {
     if (!isDriveConnected) return;
-    const rawName = prompt('Naam voor nieuwe notitie:', 'nieuwe-notitie');
+    const rawName = prompt('Naam voor nieuw Google Document:', 'nieuwe-notitie');
     if (!rawName) return;
 
-    const fileName = rawName.trim().endsWith('.txt') ? rawName.trim() : rawName.trim() + '.txt';
+    const docName = rawName.trim().replace(/\.[^/.]+$/, '');
+    if (!docName) return;
 
     try {
-      await drivePost({
+      const created = await drivePost({
         action: 'create',
-        name: fileName,
-        content: '<!--EMOJI:📝-->\n'
+        name: docName,
+        content: '📝\n'
       });
 
       const listData = await driveGet({ action: 'list' });
@@ -213,13 +236,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const items = fileTree.querySelectorAll('.tree-item');
       for (const item of items) {
-        if (item.textContent.includes(fileName)) {
+        if (item.textContent.includes(created.name || docName)) {
           item.click();
           break;
         }
       }
     } catch (err) {
-      alert('Kon bestand niet aanmaken in Google Drive: ' + err.message);
+      alert('Kon Google Document niet aanmaken in Google Drive: ' + err.message);
     }
   });
 
@@ -227,14 +250,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function saveCurrentFile() {
     if (!currentFile || !isDriveConnected) return;
     try {
-      const currentEmoji = emojiBtn.textContent || '📄';
-      const fileContent = `<!--EMOJI:${currentEmoji}-->\n` + editor.innerHTML;
+      const currentEmoji = emojiBtn.textContent || (currentFile.isDoc ? '📘' : '📄');
+      const currentTitle = titleInput.value.trim();
+
+      const fileContent = currentFile.isDoc
+        ? `${currentEmoji}\n` + editor.innerText
+        : `<!--EMOJI:${currentEmoji}-->\n` + editor.innerHTML;
 
       await drivePost({
         action: 'save',
         id: currentFile.id,
+        title: currentTitle,
         content: fileContent
       });
+
+      if (currentTitle && currentFile.isDoc && currentFile.name !== currentTitle) {
+        currentFile.name = currentTitle;
+      }
     } catch (err) {
       console.error('Fout bij opslaan naar Drive:', err);
     }
@@ -660,3 +692,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     wordCountDisplay.textContent = `${words} ${words === 1 ? 'woord' : 'woorden'}`;
   }
 });
+```[cite: 2]
