@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
   // --- GOOGLE DRIVE VIA APPS SCRIPT CONFIGURATIE ---
-  const DRIVE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx8qCqR1HURR73apixsRqm3tjbkaEu1sOHV5pZWyCGn-tOaFa2cHBALl3vbprW3hLtl2g/exec';
+  const DRIVE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwLrkSidpRellaN9hhucayYRgotVNSB9nWub0ZDMf38SOTzzNOV_bNk4g5Rc4nvobNF8w/exec';
   const DRIVE_API_TOKEN = 'API_Roeland_2026';
 
   let isDriveConnected = false;
@@ -42,30 +42,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   btnExpandRight.addEventListener('click', () => rightSidebar.classList.remove('collapsed'));
 
   // --- 1. GOOGLE DRIVE KOPPELEN & BESTANDEN LADEN ---
-  async function driveGet(params) {
+  async function driveRequest(params) {
     const url = new URL(DRIVE_SCRIPT_URL);
     url.searchParams.set('token', DRIVE_API_TOKEN);
-    Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) {
+        url.searchParams.set(k, String(v));
+      }
+    });
 
     const res = await fetch(url.toString());
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || 'Drive fout');
-    return data;
-  }
-
-  async function drivePost(payload) {
-    const url = new URL(DRIVE_SCRIPT_URL);
-    url.searchParams.set('token', DRIVE_API_TOKEN);
-
-    const res = await fetch(url.toString(), {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload)
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || 'Drive opslaan mislukt');
     return data;
   }
 
@@ -75,7 +64,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    const data = await driveGet({ action: 'list' });
+    const data = await driveRequest({ action: 'list' });
     isDriveConnected = true;
     localStorage.setItem('atelier_drive_linked', '1');
     btnNewFile.removeAttribute('disabled');
@@ -156,7 +145,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.querySelectorAll('.tree-item').forEach(el => el.classList.remove('active'));
       element.classList.add('active');
 
-      const data = await driveGet({ action: 'read', id: fileItem.id });
+      const data = await driveRequest({ action: 'read', id: fileItem.id });
       const isDoc = Boolean(data.isDoc ?? fileItem.isDoc);
       currentFile = { id: fileItem.id, name: data.name || fileItem.name, isDoc };
 
@@ -233,13 +222,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!docName) return;
 
     try {
-      const created = await drivePost({
+      const created = await driveRequest({
         action: 'create',
         name: docName,
         content: '📝\n'
       });
 
-      const listData = await driveGet({ action: 'list' });
+      const listData = await driveRequest({ action: 'list' });
       renderFileTree(listData.items || []);
 
       const items = fileTree.querySelectorAll('.tree-item');
@@ -265,7 +254,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         ? `${currentEmoji}\n` + editor.innerText
         : `<!--EMOJI:${currentEmoji}-->\n` + editor.innerHTML;
 
-      await drivePost({
+      await driveRequest({
         action: 'save',
         id: currentFile.id,
         title: currentTitle,
