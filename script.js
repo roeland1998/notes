@@ -142,6 +142,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       .replace(/>/g, '&gt;');
   }
 
+  function extractLeadingEmojiLine(line) {
+    const trimmed = (line || '').trim();
+    if (!trimmed) return null;
+    const withoutVariation = trimmed.replace(/[\uFE0E\uFE0F]/g, '');
+    if (!withoutVariation || withoutVariation.length > 8) return null;
+    const emojiRegex = /^(\p{Extended_Pictographic}|\p{Emoji_Presentation})+$/u;
+    return emojiRegex.test(withoutVariation) ? trimmed : null;
+  }
+
   async function openFile(fileItem, element) {
     try {
       document.querySelectorAll('.tree-item').forEach(el => el.classList.remove('active'));
@@ -159,10 +168,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (isDoc) {
         const lines = rawText.split(/\r?\n/);
-        const firstLine = (lines[0] || '').trim();
-        const emojiRegex = /^(\p{Extended_Pictographic}|\p{Emoji_Presentation})$/u;
-        if (emojiRegex.test(firstLine)) {
-          emoji = firstLine;
+        const leadingEmoji = extractLeadingEmojiLine(lines[0]);
+        if (leadingEmoji) {
+          emoji = leadingEmoji;
           lines.shift();
         }
         content = lines
@@ -692,4 +700,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     wordCountDisplay.textContent = `${words} ${words === 1 ? 'woord' : 'woorden'}`;
   }
 });
-```[cite: 2]
